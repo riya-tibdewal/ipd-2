@@ -1,6 +1,6 @@
 """Dataclasses & Shared Data Structures (Dev 2)"""
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 import numpy as np
 
 @dataclass

@@ -1,6 +1,5 @@
-"""CSV & Analytics Summary Generator (Dev 3)"""
+"""CSV Analytics Summary Generator (Dev 3)"""
 import csv
-from typing import Dict
 from src.tracker import TrackManager
 
 class ReportGenerator:
@@ -8,8 +7,9 @@ class ReportGenerator:
     def export_csv(filepath: str, tracker: TrackManager):
         with open(filepath, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(["Track ID", "Student Name", "Average Attention (%)", "Final Stable Label"])
+            writer.writerow(["Track ID", "Student Name", "Attentiveness Status", "Final Behavior Class", "Average Attention Score (%)"])
             for tid, state in tracker.states.items():
-                name = tracker.names.get(tid, f"Student-{tid}")
-                writer.writerow([tid, name, f"{state.ema_attention:.2f}", state.current_label])
-        print(f"Analytics report successfully saved to {filepath}")
+                name = f"Student-{tid}"
+                status = "ATTENTIVE" if state.current_label == "WRITING" else "NON-ATTENTIVE"
+                writer.writerow([tid, name, status, state.current_label, f"{state.ema_attention:.2f}"])
+        print(f"Analytics report saved to {filepath}")

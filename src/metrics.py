@@ -1,5 +1,6 @@
 """Pose Keypoint Geometry Math (Dev 2)"""
 import numpy as np
+from typing import Tuple, Optional
 from src.datatypes import PoseMetrics
 import config
 
@@ -20,25 +21,18 @@ def extract_pose_metrics(
     if kps is None or len(kps) < 17:
         return metrics
 
-    # Keypoint Indices (COCO Standard)
-    # 0: Nose, 1: L_Eye, 2: R_Eye, 3: L_Ear, 4: R_Ear
-    # 5: L_Shoulder, 6: R_Shoulder, 7: L_Elbow, 8: R_Elbow
-    # 9: L_Wrist, 10: R_Wrist, 11: L_Hip, 12: R_Hip
-    # 13: L_Knee, 14: R_Knee, 15: L_Ankle, 16: R_Ankle
-    
     x, y, conf = kps[:, 0], kps[:, 1], kps[:, 2]
     x1, y1, x2, y2 = bbox
     box_w = max(x2 - x1, 1.0)
     box_h = max(y2 - y1, 1.0)
 
-    # Scale normalization
     sh_w = np.linalg.norm([x[5] - x[6], y[5] - y[6]]) if (conf[5] > 0.2 and conf[6] > 0.2) else 0.0
     hip_w = np.linalg.norm([x[11] - x[12], y[11] - y[12]]) if (conf[11] > 0.2 and conf[12] > 0.2) else 0.0
     
     scale = sh_w if sh_w > 0 else (hip_w if hip_w > 0 else max(box_w * config.BOX_WIDTH_SCALE_RATIO, 1.0))
     metrics.scale = float(scale)
 
-    # Head Metrics
+    # Head Geometry
     if conf[0] > 0.2 and conf[5] > 0.2 and conf[6] > 0.2:
         sh_mid_y = (y[5] + y[6]) / 2.0
         nose_above_sh = (sh_mid_y - y[0]) / scale
@@ -90,7 +84,7 @@ def extract_pose_metrics(
         if body_disps:
             metrics.body_motion = float(np.mean(body_disps) / scale)
 
-    # Vertical Extension & Standing Cues
+    # Extension / Seated Checks
     if conf[5] > 0.2 and conf[6] > 0.2 and conf[11] > 0.2 and conf[12] > 0.2:
         sh_mid_y = (y[5] + y[6]) / 2.0
         hip_mid_y = (y[11] + y[12]) / 2.0

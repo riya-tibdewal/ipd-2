@@ -3,7 +3,6 @@ import numpy as np
 
 # Performance & Inference
 IMGSZ = 480
-FACE_RECOGNITION_EVERY_N = 10
 STALE_TRACK_S = 7.0
 DESIRED_FPS = 20
 
@@ -32,15 +31,12 @@ STRONG_EVIDENCE_FRAMES = 4
 STRONG_EVIDENCE_MARGIN = 0.28
 MIN_LABEL_CONFIDENCE = 0.42
 
-# UI / Colors (BGR Format)
+# UI / Colors (BGR Format) - 4 Primary Classes
 BEHAVIOR_COLORS = {
-    "ATTENTIVE": (0, 255, 0),      # Green
-    "WRITING": (255, 255, 0),      # Cyan
-    "USING_PHONE": (0, 0, 255),    # Red
-    "SLEEPING": (128, 0, 128),     # Purple
-    "STANDING": (255, 165, 0),     # Orange
-    "TALKING": (0, 165, 255),      # Amber/Orange
-    "DISTRACTED": (0, 0, 139),     # Dark Red
+    "WRITING": (0, 255, 0),        # Green (Attentive)
+    "TALKING": (0, 165, 255),      # Amber/Orange (Non-Attentive)
+    "USING_PHONE": (0, 0, 255),    # Red (Non-Attentive)
+    "SLEEPING": (128, 0, 128),     # Purple (Non-Attentive)
     "UNKNOWN": (128, 128, 128)     # Grey
 }
 
