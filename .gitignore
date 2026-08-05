@@ -1,2 +1,25 @@
 # Virtual environment
 
+cat <<EOT > .gitignore
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Large Model Weights (Keep repo size small)
+*.pt
+*.onnx
+models/
+data/*.csv
+data/*.mp4
+data/*.avi
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store

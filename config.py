@@ -2,9 +2,13 @@
 import numpy as np
 
 # Performance & Inference
-IMGSZ = 480
+IMGSZ = 640  # Higher resolution significantly improves wrist & keypoint detection on desks
+KP_CONF_THRESHOLD = 0.25 # Allows keypoint tracking even when partially occluded
 STALE_TRACK_S = 7.0
 DESIRED_FPS = 20
+
+# Temporal Processing Window
+TEMPORAL_WINDOW = 10
 
 # Scale Fallback Ratio
 BOX_WIDTH_SCALE_RATIO = 0.30
@@ -31,7 +35,7 @@ STRONG_EVIDENCE_FRAMES = 4
 STRONG_EVIDENCE_MARGIN = 0.28
 MIN_LABEL_CONFIDENCE = 0.42
 
-# UI / Colors (BGR Format) - 4 Primary Classes
+# UI / Colors (BGR Format) - Primary Classes
 BEHAVIOR_COLORS = {
     "WRITING": (0, 255, 0),        # Green (Attentive)
     "TALKING": (0, 165, 255),      # Amber/Orange (Non-Attentive)
@@ -47,4 +51,3 @@ UPPER_SKELETON_EDGES = [
     (6, 8), (8, 10),                     # Right Arm
     (5, 11), (6, 12)                     # Torso
 ]
-KP_CONF_THRESHOLD = 0.35

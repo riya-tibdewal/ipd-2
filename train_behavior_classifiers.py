@@ -34,7 +34,7 @@ def extract_features_from_videos(video_dir="data/training_videos", output_csv="d
         print(f"No video files found in {video_dir}! Structure as: {video_dir}/CLASS_NAME/video.mp4")
         return None
 
-    print(f"Found {len(video_files)} video clips across 4 behavior classes. Extracting features...")
+    print(f"Found {len(video_files)} video clips across behavior classes. Extracting features...")
 
     for video_path in video_files:
         label_str = os.path.basename(os.path.dirname(video_path)).upper()
@@ -50,15 +50,22 @@ def extract_features_from_videos(video_dir="data/training_videos", output_csv="d
                 break
             
             detections = detector.track_frame(frame)
-            for tid, bbox, kps in detections:
+            for item in detections:
+                tid, bbox, kps = item[0], item[1], item[2]
+                has_phone = item[3] if len(item) > 3 else False
+                has_notebook = item[4] if len(item) > 4 else False
+
                 prev_kps = prev_kps_dict.get(tid, None)
                 metrics = extract_pose_metrics(kps, bbox, prev_kps)
+                metrics.has_phone = 1.0 if has_phone else 0.0
+                metrics.has_notebook = 1.0 if has_notebook else 0.0
                 prev_kps_dict[tid] = kps.copy()
 
                 feat = [
                     metrics.head_down, metrics.head_up, metrics.head_side, metrics.torso_lean,
                     metrics.hands_near_desk, metrics.hands_near_head, metrics.wrist_motion, metrics.body_motion,
                     metrics.vertical_extension, metrics.leg_visibility, metrics.back_view, metrics.seated_cue,
+                    metrics.has_phone, metrics.has_notebook,
                     LABEL_MAP[label_str]
                 ]
                 data_rows.append(feat)
@@ -69,6 +76,7 @@ def extract_features_from_videos(video_dir="data/training_videos", output_csv="d
         "head_down", "head_up", "head_side", "torso_lean",
         "hands_near_desk", "hands_near_head", "wrist_motion", "body_motion",
         "vertical_extension", "leg_visibility", "back_view", "seated_cue",
+        "has_phone", "has_notebook",
         "target_label"
     ]
     df = pd.DataFrame(data_rows, columns=cols)
@@ -97,10 +105,10 @@ def train_models(csv_path="data/pose_dataset.csv", model_out="models/behavior_mo
     print("\n--- Tier-1 Classifier Performance (Attentive [Writing] vs Non-Attentive) ---")
     print(classification_report(y_test_t1, tier1_model.predict(X_test), target_names=["Attentive (Writing)", "Non-Attentive"]))
 
-    # 2. Tier 2 Multi-Class Classifier (4 Classes)
+    # 2. Tier 2 Multi-Class Classifier
     tier2_model = RandomForestClassifier(n_estimators=120, max_depth=10, random_state=42)
     tier2_model.fit(X_train, y_train)
-    print("\n--- Tier-2 Multi-Class Classifier Performance (4 Classes) ---")
+    print("\n--- Tier-2 Multi-Class Classifier Performance ---")
     print(classification_report(y_test, tier2_model.predict(X_test), target_names=[INV_LABEL_MAP[i] for i in sorted(INV_LABEL_MAP.keys())]))
 
     os.makedirs(os.path.dirname(model_out), exist_ok=True)
@@ -109,7 +117,7 @@ def train_models(csv_path="data/pose_dataset.csv", model_out="models/behavior_mo
         "tier2": tier2_model,
         "label_map": INV_LABEL_MAP
     }, model_out)
-    print(f"Trained 4-class pipeline saved to {model_out}")
+    print(f"Trained model pipeline saved to {model_out}")
 
 if __name__ == "__main__":
     extract_features_from_videos()

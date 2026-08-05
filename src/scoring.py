@@ -1,4 +1,5 @@
-"""4-Class Behavior Scoring Engine (Dev 2)"""
+# 
+"""4-Class Behavior Scoring Engine (14-Feature Alignment)"""
 import os
 import joblib
 import numpy as np
@@ -18,9 +19,10 @@ class BehaviorScoringEngine:
                 bundle = joblib.load(model_path)
                 self.tier1_model = bundle["tier1"]
                 self.tier2_model = bundle["tier2"]
-                self.label_map = bundle["label_map"]
+                raw_map = bundle["label_map"]
+                self.label_map = {int(k): v for k, v in raw_map.items()}
                 self.ml_enabled = True
-                print(f"[BehaviorScoringEngine] Loaded 4-Class ML models from {model_path}")
+                print(f"[BehaviorScoringEngine] Loaded ML models from {model_path}")
             except Exception as e:
                 print(f"[BehaviorScoringEngine] Failed to load ML models ({e}). Using heuristic fallback.")
 
@@ -31,10 +33,12 @@ class BehaviorScoringEngine:
         return 0.0
 
     def _metrics_to_feature_vector(self, m: PoseMetrics) -> np.ndarray:
+        # EXACT 14 FEATURES matching train_behavior_classifiers.py
         return np.array([[
             m.head_down, m.head_up, m.head_side, m.torso_lean,
             m.hands_near_desk, m.hands_near_head, m.wrist_motion, m.body_motion,
-            m.vertical_extension, m.leg_visibility, m.back_view, m.seated_cue
+            m.vertical_extension, m.leg_visibility, m.back_view, m.seated_cue,
+            getattr(m, 'has_phone', 0.0), getattr(m, 'has_notebook', 0.0)
         ]])
 
     def assess(self, m: PoseMetrics, prev_assessment: Optional[FrameAssessment] = None) -> FrameAssessment:
@@ -55,7 +59,8 @@ class BehaviorScoringEngine:
             "desk_focus": desk_focus
         }
 
-        # ML-Based 4-Class Evaluation
+        has_phone = getattr(m, 'has_phone', 0.0) > 0.5
+
         if self.ml_enabled:
             feat_vec = self._metrics_to_feature_vector(m)
             probs = self.tier2_model.predict_proba(feat_vec)[0]
@@ -67,14 +72,18 @@ class BehaviorScoringEngine:
             }
 
             for cls_idx, prob in zip(classes, probs):
-                label_str = self.label_map.get(cls_idx, "UNKNOWN")
+                label_str = self.label_map.get(int(cls_idx), "UNKNOWN")
                 scores[label_str] = float(prob)
 
+            if has_phone:
+                scores["USING_PHONE"] = max(scores["USING_PHONE"], 0.85)
+                scores["WRITING"] *= 0.05
+
             assessment.raw_scores = scores
-            assessment.reasons = ["Trained 4-Class Random Forest Inference"]
+            assessment.reasons = ["ML Prediction"]
             return assessment
 
-        # Heuristic Fallback Engine
+        # Heuristic Fallback
         scores = {
             "WRITING": rhythmic_wrist * 0.40 + desk_focus * 0.35 + m.head_down * 0.25,
             "USING_PHONE": m.hands_near_head * 0.50 + m.head_down * 0.30 + stillness * 0.20,
@@ -83,10 +92,10 @@ class BehaviorScoringEngine:
             "UNKNOWN": 0.10
         }
 
-        if scores["WRITING"] > 0.5 and desk_focus > 0.4:
-            scores["SLEEPING"] *= 0.2
-            scores["USING_PHONE"] *= 0.3
+        if has_phone:
+            scores["USING_PHONE"] = max(scores["USING_PHONE"], 0.85)
+            scores["WRITING"] *= 0.05
 
         assessment.raw_scores = scores
-        assessment.reasons = [f"Primary cue active for {max(scores, key=scores.get)}"]
+        assessment.reasons = [f"Primary cue: {max(scores, key=scores.get)}"]
         return assessment
