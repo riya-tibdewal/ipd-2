@@ -1,25 +1,21 @@
-# Virtual environment
-
-cat <<EOT > .gitignore
-# Python cache
+# Python Caches & Environments
 __pycache__/
 *.pyc
-*.pyo
-
-# Virtual environment
 venv/
-env/
-.venv/
+.env
 
-# Large Model Weights (Keep repo size small)
+# Large YOLO Model Weights (.pt files)
 *.pt
-*.onnx
-models/
-data/*.csv
-data/*.mp4
-data/*.avi
+yolov8n.pt
+yolov8n-pose.pt
+yolov8s-pose.pt
 
-# IDE / System
-.vscode/
-.idea/
-.DS_Store
+# Video Files & Large Datasets
+*.mp4
+*.avi
+*.mkv
+data/training_videos/
+data/*.csv
+
+# ML Output Models
+models/*.joblib
