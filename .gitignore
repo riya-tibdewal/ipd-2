@@ -19,3 +19,7 @@ data/*.csv
 
 # ML Output Models
 models/*.joblib
+
+# Web demo runtime outputs
+runtime/
+session_analytics_report.csv

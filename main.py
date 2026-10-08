@@ -110,7 +110,7 @@ class CameraManager:
         self.cap.release()
 
 def main():
-    video_path = "data/talking2.mp4"
+    video_path = "data/train_sleeping.mp4"
     source = video_path if os.path.exists(video_path) else 0
 
     cam = CameraManager(source)
